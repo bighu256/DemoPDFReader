@@ -29,7 +29,7 @@ public class PDFDocumentViewModel extends AndroidViewModel {
                 if (documentPath == null) {
                     return AbsentLiveData.create();
                 } else {
-                    return DocumentRepository.get().loadDocument(documentPath);
+                    return DocumentRepository.create().loadDocument(documentPath);
                 }
             }
         });
