@@ -3,6 +3,9 @@ package com.chaoxing.pdfreader;
 import android.arch.lifecycle.LiveData;
 import android.arch.lifecycle.MediatorLiveData;
 
+import com.artifex.mupdf.fitz.Document;
+import com.chaoxing.pdfreader.util.Utils;
+
 import io.reactivex.Observable;
 import io.reactivex.ObservableEmitter;
 import io.reactivex.ObservableOnSubscribe;
@@ -27,34 +30,22 @@ public class DocumentRepository {
         return new DocumentRepository();
     }
 
-    public LiveData<DocumentBinding> loadDocument(final String documentPath) {
-        Observable.create(new ObservableOnSubscribe<DocumentBinding>() {
+    public LiveData<Resource<DocumentBinding>> openDocument(String path) {
+        return new ExecuteBoundResource<String, DocumentBinding>(path) {
             @Override
-            public void subscribe(ObservableEmitter<DocumentBinding> emitter) throws Exception {
+            public Resource<DocumentBinding> onExecute(String args) {
+                if (Utils.isBlank(args)) {
+                    return Resource.error("文档打开失败", null);
+                }
 
+                DocumentBinding binding = new DocumentBinding();
+                Document document = Document.openDocument(args);
+                binding.setDocument(document);
+                binding.setNeedsPassword(document.needsPassword());
+
+                return Resource.success(binding);
             }
-        }).observeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe(new Observer<DocumentBinding>() {
-            @Override
-            public void onSubscribe(Disposable d) {
-
-            }
-
-            @Override
-            public void onNext(DocumentBinding documentBinding) {
-
-            }
-
-            @Override
-            public void onError(Throwable e) {
-
-            }
-
-            @Override
-            public void onComplete() {
-
-            }
-        });
-        return result;
+        }.asLiveData();
     }
 
 }
