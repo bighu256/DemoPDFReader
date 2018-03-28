@@ -3,6 +3,8 @@ package com.chaoxing.pdfreader;
 import android.arch.lifecycle.LiveData;
 import android.arch.lifecycle.MediatorLiveData;
 
+import com.artifex.mupdf.fitz.Document;
+
 import io.reactivex.Observable;
 import io.reactivex.ObservableEmitter;
 import io.reactivex.ObservableOnSubscribe;
@@ -27,11 +29,15 @@ public class DocumentRepository {
         return new DocumentRepository();
     }
 
-    public LiveData<DocumentBinding> loadDocument(final String documentPath) {
+    public LiveData<DocumentBinding> openDocument(final String documentPath) {
         Observable.create(new ObservableOnSubscribe<DocumentBinding>() {
             @Override
             public void subscribe(ObservableEmitter<DocumentBinding> emitter) throws Exception {
-
+                DocumentBinding binding = new DocumentBinding();
+                Document document = Document.openDocument(documentPath);
+                binding.setDocument(document);
+                binding.setNeedPassword(document.needsPassword());
+                emitter.onNext(binding);
             }
         }).observeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe(new Observer<DocumentBinding>() {
             @Override
@@ -41,7 +47,7 @@ public class DocumentRepository {
 
             @Override
             public void onNext(DocumentBinding documentBinding) {
-
+                result.setValue(documentBinding);
             }
 
             @Override
