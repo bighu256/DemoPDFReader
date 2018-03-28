@@ -1,10 +1,13 @@
 package com.chaoxing.pdfreader;
 
+import android.arch.lifecycle.Observer;
 import android.arch.lifecycle.ViewModelProviders;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
+import android.view.View;
 
 import com.artifex.mupdf.fitz.Document;
 
@@ -28,12 +31,28 @@ public class PDFDocumentActivity extends AppCompatActivity {
         String mimetype = getIntent().getType();
         String uriStr = uri.toString();
 
-        String path = UriUtils.getRealPath(this, uri);
+        final String path = UriUtils.getRealPath(this, uri);
 
-        if (path == null || !path.toLowerCase().startsWith("file://")) {
+        if (path == null) {
             finish();
             return;
         }
+
+        mViewModel.getDocumentBinding().observe(this, new Observer<DocumentBinding>() {
+            @Override
+            public void onChanged(@Nullable DocumentBinding documentBinding) {
+                if (documentBinding != null) {
+
+                }
+            }
+        });
+
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                mViewModel.openDocument(path);
+            }
+        }, 1000);
 
 
     }

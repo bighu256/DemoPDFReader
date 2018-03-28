@@ -72,12 +72,12 @@ public class UriUtils {
                     }
 
                 }
-            } else if (isContentUri(uri)) {
-                if (isGooglePhotoDoc(uri.getAuthority())) {
-                    path = uri.getLastPathSegment();
-                } else {
-                    path = getRealPath(context.getContentResolver(), uri, null);
-                }
+            }
+        } else if (isContentUri(uri)) {
+            if (isGooglePhotoDoc(uri.getAuthority())) {
+                path = uri.getLastPathSegment();
+            } else {
+                path = getRealPath(context.getContentResolver(), uri, null);
             }
         }
 
