@@ -37,6 +37,7 @@ public abstract class ExecuteBoundResource<ArgumentType, ResultType> {
     public ExecuteBoundResource(ArgumentType args) {
         this.args = args;
         result.setValue(Resource.loading((ResultType) null));
+        execute();
     }
 
     @MainThread
@@ -50,7 +51,7 @@ public abstract class ExecuteBoundResource<ArgumentType, ResultType> {
         return result;
     }
 
-    public void execute() {
+    private void execute() {
         observable.subscribe(new Observer<Resource<ResultType>>() {
             @Override
             public void onSubscribe(Disposable d) {
