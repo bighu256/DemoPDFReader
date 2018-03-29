@@ -38,6 +38,18 @@ public class Resource<T> {
         return new Resource<>(Status.LOADING, data, null);
     }
 
+    public boolean isSuccessful() {
+        return status == Status.SUCCESS;
+    }
+
+    public boolean isError() {
+        return status == Status.ERROR;
+    }
+
+    public boolean isLoading() {
+        return status == Status.LOADING;
+    }
+
     public Progress getProgress() {
         return progress;
     }
@@ -45,6 +57,21 @@ public class Resource<T> {
     public Resource setProgress(Progress progress) {
         this.progress = progress;
         return this;
+    }
+
+    @NonNull
+    public Status getStatus() {
+        return status;
+    }
+
+    @Nullable
+    public String getMessage() {
+        return message;
+    }
+
+    @Nullable
+    public T getData() {
+        return data;
     }
 
     @Override
@@ -86,4 +113,6 @@ public class Resource<T> {
                 .append(" }")
                 .toString();
     }
+
+
 }

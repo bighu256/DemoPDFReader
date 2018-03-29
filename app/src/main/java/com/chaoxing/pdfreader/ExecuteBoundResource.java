@@ -2,7 +2,10 @@ package com.chaoxing.pdfreader;
 
 import android.arch.lifecycle.LiveData;
 import android.arch.lifecycle.MediatorLiveData;
+import android.content.Context;
 import android.support.annotation.MainThread;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.annotation.WorkerThread;
 
 import java.util.Objects;
@@ -21,23 +24,20 @@ import io.reactivex.schedulers.Schedulers;
 
 public abstract class ExecuteBoundResource<ArgumentType, ResultType> {
 
+    private Context mApplicationContext;
     private ArgumentType args;
     private final MediatorLiveData<Resource<ResultType>> result = new MediatorLiveData<>();
+
     private Observable observable = Observable.create(new ObservableOnSubscribe<Resource<ResultType>>() {
         @Override
         public void subscribe(ObservableEmitter<Resource<ResultType>> emitter) throws Exception {
-            Resource result = onExecute(args);
-            if (result == null) {
-                result = Resource.error(null, null);
-            }
-            emitter.onNext(result);
+            emitter.onNext(onExecute(mApplicationContext, args));
         }
     }).observeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread());
 
-    public ExecuteBoundResource(ArgumentType args) {
+    public ExecuteBoundResource(Context context, ArgumentType args) {
+        mApplicationContext = context.getApplicationContext();
         this.args = args;
-        result.setValue(Resource.loading((ResultType) null));
-        execute();
     }
 
     @MainThread
@@ -47,11 +47,20 @@ public abstract class ExecuteBoundResource<ArgumentType, ResultType> {
         }
     }
 
-    public LiveData<Resource<ResultType>> asLiveData() {
-        return result;
+    public final ExecuteBoundResource ready() {
+        return ready(null);
     }
 
-    private void execute() {
+    public final ExecuteBoundResource ready(@Nullable Resource<ResultType> data) {
+        if (data != null) {
+            result.setValue(data);
+        } else {
+            result.setValue(Resource.loading((ResultType) null));
+        }
+        return this;
+    }
+
+    public final LiveData<Resource<ResultType>> execute() {
         observable.subscribe(new Observer<Resource<ResultType>>() {
             @Override
             public void onSubscribe(Disposable d) {
@@ -72,6 +81,8 @@ public abstract class ExecuteBoundResource<ArgumentType, ResultType> {
 
             }
         });
+
+        return result;
     }
 
     public void cancel() {
@@ -79,6 +90,7 @@ public abstract class ExecuteBoundResource<ArgumentType, ResultType> {
     }
 
     @WorkerThread
-    public abstract Resource<ResultType> onExecute(ArgumentType args);
+    protected abstract @NonNull
+    Resource<ResultType> onExecute(Context applicationContext, ArgumentType args);
 
 }
