@@ -1,11 +1,14 @@
 package com.chaoxing.pdfreader;
 
+import android.arch.persistence.room.Index;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.artifex.mupdf.fitz.Page;
 import com.davemorrissey.labs.subscaleview.ImageSource;
 import com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView;
 
@@ -18,19 +21,12 @@ import java.util.List;
 
 public class PageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
-    private List<String> mImageList = new ArrayList<>();
+    private static final String TAG = PageAdapter.class.getSimpleName();
+
+    private List<Integer> mPageIndexList;
 
     public PageAdapter() {
-        mImageList.add("android_p.png");
-        mImageList.add("android_p.png");
-        mImageList.add("android_p.png");
-        mImageList.add("android_p.png");
-        mImageList.add("android_p.png");
-        mImageList.add("android_p.png");
-        mImageList.add("android_p.png");
-        mImageList.add("android_p.png");
     }
-
 
     @NonNull
     @Override
@@ -47,7 +43,7 @@ public class PageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     @Override
     public int getItemCount() {
-        return mImageList.size();
+        return mPageIndexList == null ? 0 : mPageIndexList.size();
     }
 
     static class PageViewHolder extends RecyclerView.ViewHolder {
@@ -59,4 +55,16 @@ public class PageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             mPageView = itemView.findViewById(R.id.page_view);
         }
     }
+
+    public void setPageIndexList(List<Integer> pageIndexList) {
+        mPageIndexList = pageIndexList;
+    }
+
+    @Override
+    public void onViewRecycled(@NonNull RecyclerView.ViewHolder holder) {
+        super.onViewRecycled(holder);
+        int position = holder.getAdapterPosition();
+        Log.i(TAG, "onViewRecycled : " + position);
+    }
+
 }

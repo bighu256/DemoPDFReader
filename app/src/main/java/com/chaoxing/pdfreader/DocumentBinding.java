@@ -1,6 +1,9 @@
 package com.chaoxing.pdfreader;
 
 import com.artifex.mupdf.fitz.Document;
+import com.artifex.mupdf.fitz.Page;
+
+import java.util.List;
 
 /**
  * Created by HUWEI on 2018/3/26.
@@ -16,6 +19,7 @@ public class DocumentBinding {
     private String title;
     private boolean reflowable;
     private int pageCount;
+    private List<Page> pageList;
 
     public String getPath() {
         return path;
@@ -64,4 +68,13 @@ public class DocumentBinding {
     public void setPageCount(int pageCount) {
         this.pageCount = pageCount;
     }
+
+    public List<Page> getPageList() {
+        return pageList;
+    }
+
+    public void setPageList(List<Page> pageList) {
+        this.pageList = pageList;
+    }
+
 }

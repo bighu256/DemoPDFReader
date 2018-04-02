@@ -8,33 +8,20 @@ import android.text.TextUtils;
 import android.util.Log;
 
 import com.artifex.mupdf.fitz.Document;
+import com.artifex.mupdf.fitz.Page;
 import com.chaoxing.pdfreader.util.Utils;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by HUWEI on 2018/3/26.
  */
 
-public class DocumentHandler {
+public class DocumentHelper {
 
-    private static final String TAG = DocumentHandler.class.getSimpleName();
-
-    private static DocumentHandler sHandler;
-
-    private DocumentHandler() {
-    }
-
-    public static DocumentHandler get() {
-        if (sHandler == null) {
-            synchronized (DocumentHandler.class) {
-                if (sHandler == null) {
-                    sHandler = new DocumentHandler();
-                }
-            }
-        }
-        return sHandler;
-    }
+    private static final String TAG = DocumentHelper.class.getSimpleName();
 
     public LiveData<Resource<DocumentBinding>> openDocument(Context context, final String path) {
         return new ExecuteBoundResource<String, DocumentBinding>(context, path) {
@@ -106,6 +93,22 @@ public class DocumentHandler {
                 return Resource.error(message, null);
             }
         }.ready().execute();
+    }
+
+    public LiveData<Resource<List<Page>>> loadPageList(Context context, DocumentBinding documentBinding) {
+        return new ExecuteBoundResource<DocumentBinding, List<Page>>(context, documentBinding) {
+
+            @NonNull
+            @Override
+            protected Resource<List<Page>> onExecute(Context applicationContext, DocumentBinding args) {
+                List<Page> pageList = new ArrayList<>(args.getPageCount());
+                for (int i = 0; i < args.getPageCount(); i++) {
+                    pageList.add(null);
+                }
+                return Resource.success(pageList);
+            }
+        }.ready().execute();
+
     }
 
 }

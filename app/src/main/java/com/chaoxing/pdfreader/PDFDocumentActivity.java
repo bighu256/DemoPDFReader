@@ -9,6 +9,9 @@ import android.support.annotation.Nullable;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.AppCompatEditText;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.PagerSnapHelper;
+import android.support.v7.widget.RecyclerView;
 import android.text.method.PasswordTransformationMethod;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
@@ -18,6 +21,13 @@ import android.widget.Toast;
 
 import com.artifex.mupdf.fitz.Document;
 import com.artifex.mupdf.fitz.Page;
+import com.chaoxing.pdfreader.util.AutoClearedValue;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Created by HUWEI on 2018/3/26.
@@ -27,8 +37,8 @@ public class PDFDocumentActivity extends AppCompatActivity {
 
     private DocumentViewModel mViewModel;
 
-    protected Document mDocument;
-
+    private RecyclerView mDocumentPager;
+    private PageAdapter mPageAdapter;
     private AlertDialog mInputPasswordDialog;
     private ProgressBar mPbLoading;
     private TextView mTvMessage;
@@ -38,8 +48,7 @@ public class PDFDocumentActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_pdf_document);
-        mPbLoading = findViewById(R.id.pb_loading);
-        mTvMessage = findViewById(R.id.tv_message);
+
 
         mViewModel = ViewModelProviders.of(this).get(DocumentViewModel.class);
 
@@ -61,6 +70,17 @@ public class PDFDocumentActivity extends AppCompatActivity {
     }
 
     private void initDocument() {
+        mDocumentPager = findViewById(R.id.document_pager);
+        LinearLayoutManager manager = new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false);
+        mDocumentPager.setLayoutManager(manager);
+        PagerSnapHelper snapHelper = new PagerSnapHelper();
+        snapHelper.attachToRecyclerView(mDocumentPager);
+        mPageAdapter = new PageAdapter();
+        mDocumentPager.setAdapter(mPageAdapter);
+        mDocumentPager.setHasFixedSize(true);
+        mPbLoading = findViewById(R.id.pb_loading);
+        mTvMessage = findViewById(R.id.tv_message);
+
         mViewModel.getOpenDocumentResult().observe(this, mObserverOpenDocument);
         mViewModel.getCheckPasswordResult().observe(PDFDocumentActivity.this, mObserverCheckPassword);
         mViewModel.getLoadDocumentResult().observe(this, mObserverLoadDocument);
@@ -147,8 +167,15 @@ public class PDFDocumentActivity extends AppCompatActivity {
                 mPbLoading.setVisibility(View.VISIBLE);
             } else if (documentBinding.isSuccessful()) {
                 mPbLoading.setVisibility(View.GONE);
+                int pageCount = documentBinding.getData().getPageCount();
+                List<Integer> pageIndexList = new ArrayList<>(pageCount);
+                for (int i = 0; i < pageCount; i++) {
+                    pageIndexList.add(i);
+                }
+                mPageAdapter.setPageIndexList(pageIndexList);
+                mPageAdapter.notifyDataSetChanged();
             } else {
-                mPbLoading.setVisibility(View.VISIBLE);
+                mPbLoading.setVisibility(View.GONE);
                 Toast.makeText(PDFDocumentActivity.this, documentBinding.getMessage(), Toast.LENGTH_SHORT).show();
                 finish();
             }
