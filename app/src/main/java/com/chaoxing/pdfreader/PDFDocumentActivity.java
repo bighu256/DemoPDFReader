@@ -1,6 +1,5 @@
 package com.chaoxing.pdfreader;
 
-import android.arch.lifecycle.MutableLiveData;
 import android.arch.lifecycle.Observer;
 import android.arch.lifecycle.ViewModelProviders;
 import android.content.DialogInterface;
@@ -18,6 +17,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.artifex.mupdf.fitz.Document;
+import com.artifex.mupdf.fitz.Page;
 
 /**
  * Created by HUWEI on 2018/3/26.
@@ -63,7 +63,7 @@ public class PDFDocumentActivity extends AppCompatActivity {
     private void initDocument() {
         mViewModel.getOpenDocumentResult().observe(this, mObserverOpenDocument);
         mViewModel.getCheckPasswordResult().observe(PDFDocumentActivity.this, mObserverCheckPassword);
-        mViewModel.getDocumentBinding().observe(this, mObserverLoadDocument);
+        mViewModel.getLoadDocumentResult().observe(this, mObserverLoadDocument);
     }
 
     private Observer<Resource<DocumentBinding>> mObserverOpenDocument = new Observer<Resource<DocumentBinding>>() {
@@ -154,5 +154,9 @@ public class PDFDocumentActivity extends AppCompatActivity {
             }
         }
     };
+
+    private void loadPage(int number) {
+        Page page = mViewModel.getDocumentBinding().getDocument().loadPage(number);
+    }
 
 }

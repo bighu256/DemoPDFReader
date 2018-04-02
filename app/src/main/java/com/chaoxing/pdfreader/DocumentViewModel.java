@@ -8,8 +8,6 @@ import android.arch.lifecycle.MutableLiveData;
 import android.arch.lifecycle.Transformations;
 import android.support.annotation.NonNull;
 
-import com.chaoxing.pdfreader.util.AbsentLiveData;
-
 /**
  * Created by HUWEI on 2018/3/26.
  */
@@ -17,18 +15,18 @@ import com.chaoxing.pdfreader.util.AbsentLiveData;
 public class DocumentViewModel extends AndroidViewModel {
 
     private final MutableLiveData<String> mPath = new MutableLiveData<>();
-    private LiveData<Resource<DocumentBinding>> mSimpleDocumentBinding;
+    private LiveData<Resource<DocumentBinding>> mOpenDocumentResult;
 
     private final MutableLiveData<String> mPassword = new MutableLiveData<>();
     private LiveData<Resource<Boolean>> mCheckPasswordResult;
 
     private final MutableLiveData<DocumentBinding> mLoadDocument = new MutableLiveData<>();
-    private LiveData<Resource<DocumentBinding>> mDocumentBinding;
+    private LiveData<Resource<DocumentBinding>> mLoadDocumentResult;
 
 
     public DocumentViewModel(@NonNull Application application) {
         super(application);
-        mSimpleDocumentBinding = Transformations.switchMap(mPath, new Function<String, LiveData<Resource<DocumentBinding>>>() {
+        mOpenDocumentResult = Transformations.switchMap(mPath, new Function<String, LiveData<Resource<DocumentBinding>>>() {
             @Override
             public LiveData<Resource<DocumentBinding>> apply(String documentPath) {
                 return DocumentHandler.get().openDocument(getApplication().getApplicationContext(), documentPath);
@@ -38,11 +36,11 @@ public class DocumentViewModel extends AndroidViewModel {
         mCheckPasswordResult = Transformations.switchMap(mPassword, new Function<String, LiveData<Resource<Boolean>>>() {
             @Override
             public LiveData<Resource<Boolean>> apply(String password) {
-                return DocumentHandler.get().checkPassword(getApplication().getApplicationContext(), mSimpleDocumentBinding.getValue().getData().getDocument(), password);
+                return DocumentHandler.get().checkPassword(getApplication().getApplicationContext(), mOpenDocumentResult.getValue().getData().getDocument(), password);
             }
         });
 
-        mDocumentBinding = Transformations.switchMap(mLoadDocument, new Function<DocumentBinding, LiveData<Resource<DocumentBinding>>>() {
+        mLoadDocumentResult = Transformations.switchMap(mLoadDocument, new Function<DocumentBinding, LiveData<Resource<DocumentBinding>>>() {
             @Override
             public LiveData<Resource<DocumentBinding>> apply(DocumentBinding document) {
                 return DocumentHandler.get().loadDocument(getApplication().getApplicationContext(), document);
@@ -56,7 +54,7 @@ public class DocumentViewModel extends AndroidViewModel {
     }
 
     public LiveData<Resource<DocumentBinding>> getOpenDocumentResult() {
-        return mSimpleDocumentBinding;
+        return mOpenDocumentResult;
     }
 
     public void checkPassword(final String password) {
@@ -71,8 +69,12 @@ public class DocumentViewModel extends AndroidViewModel {
         mLoadDocument.setValue(getOpenDocumentResult().getValue().getData());
     }
 
-    public LiveData<Resource<DocumentBinding>> getDocumentBinding() {
-        return mDocumentBinding;
+    public LiveData<Resource<DocumentBinding>> getLoadDocumentResult() {
+        return mLoadDocumentResult;
+    }
+
+    public DocumentBinding getDocumentBinding() {
+        return mLoadDocumentResult.getValue().getData();
     }
 
 }
