@@ -12,6 +12,7 @@ import java.util.List;
 public class DocumentBinding {
 
     private String path;
+    private String md5;
     private Document document;
 
     private boolean needsPassword;

@@ -30,38 +30,26 @@ public class DocumentViewModel extends AndroidViewModel {
     private LiveData<Resource<DocumentBinding>> mLoadDocumentResult;
 
     private final MutableLiveData<Integer> mLoadPage = new MutableLiveData<>();
-    private LiveData<Resource<Page>> mLoadPageResult;
+    private LiveData<Resource<Integer>> mLoadPageResult;
 
 
     public DocumentViewModel(@NonNull Application application) {
         super(application);
-        mOpenDocumentResult = Transformations.switchMap(mPath, new Function<String, LiveData<Resource<DocumentBinding>>>() {
-            @Override
-            public LiveData<Resource<DocumentBinding>> apply(String documentPath) {
-                return mDocumentHelper.openDocument(getApplication().getApplicationContext(), documentPath);
-            }
+        mOpenDocumentResult = Transformations.switchMap(mPath, documentPath -> {
+            return mDocumentHelper.openDocument(getApplication().getApplicationContext(), documentPath);
         });
 
-        mCheckPasswordResult = Transformations.switchMap(mPassword, new Function<String, LiveData<Resource<Boolean>>>() {
-            @Override
-            public LiveData<Resource<Boolean>> apply(String password) {
-                return mDocumentHelper.checkPassword(getApplication().getApplicationContext(), mOpenDocumentResult.getValue().getData().getDocument(), password);
-            }
+        mCheckPasswordResult = Transformations.switchMap(mPassword, password -> {
+            return mDocumentHelper.checkPassword(getApplication().getApplicationContext(), mOpenDocumentResult.getValue().getData().getDocument(), password);
         });
 
-        mLoadDocumentResult = Transformations.switchMap(mLoadDocument, new Function<DocumentBinding, LiveData<Resource<DocumentBinding>>>() {
-            @Override
-            public LiveData<Resource<DocumentBinding>> apply(DocumentBinding documentBinding) {
-                return mDocumentHelper.loadDocument(getApplication().getApplicationContext(), documentBinding);
-            }
+        mLoadDocumentResult = Transformations.switchMap(mLoadDocument, documentBinding -> {
+            return mDocumentHelper.loadDocument(getApplication().getApplicationContext(), documentBinding);
         });
 
-//        mLoadPageResult = Transformations.switchMap(mLoadPageList, new Function<DocumentBinding, LiveData<Resource<List<Page>>>>() {
-//            @Override
-//            public LiveData<Resource<List<Page>>> apply(DocumentBinding documentBinding) {
-//                return DocumentHelper.get().loadPageList(getApplication().getApplicationContext(), documentBinding);
-//            }
-//        });
+        mLoadPageResult = Transformations.switchMap(mLoadPage, documentBinding -> {
+            return null;
+        });
     }
 
 
@@ -93,8 +81,9 @@ public class DocumentViewModel extends AndroidViewModel {
         return mLoadDocumentResult.getValue().getData();
     }
 
-//    public List<Page> getPageList() {
+    public List<Integer> getLoadPageResult() {
 //        return mLoadPageListResult.getValue().getData();
-//    }
+        return null;
+    }
 
 }

@@ -11,6 +11,7 @@ import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
@@ -19,6 +20,7 @@ import com.chaoxing.pdfreader.util.Utils;
 import com.tbruyelle.rxpermissions2.RxPermissions;
 
 import java.io.File;
+import java.io.FileInputStream;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -53,14 +55,11 @@ public class MainActivity extends AppCompatActivity {
         mFileList.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
         mAdapter = new FileAdapter();
         mFileList.setAdapter(mAdapter);
-        mAdapter.setOnItemClickListener(new FileAdapter.OnItemClickListener() {
-            @Override
-            public void onItemClick(File file) {
-                if (file.isDirectory()) {
-                    openDirectory(file);
-                } else {
-                    openFile(file);
-                }
+        mAdapter.setOnItemClickListener(file -> {
+            if (file.isDirectory()) {
+                openDirectory(file);
+            } else {
+                openFile(file);
             }
         });
     }

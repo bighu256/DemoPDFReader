@@ -3,6 +3,8 @@ package com.chaoxing.pdfreader.util;
 import android.content.Context;
 
 import java.io.File;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 
 /**
  * Created by bighu on 2018/3/29.
@@ -30,6 +32,25 @@ public class Utils {
             return fileName.substring(index + 1).trim().toLowerCase();
         }
         return "";
+    }
+
+    public static String md5(String str) {
+        if (str != null) {
+            try {
+                MessageDigest md = MessageDigest.getInstance("MD5");
+                md.update(str.getBytes());
+                byte digest[] = md.digest();
+                StringBuilder strBuilder = new StringBuilder();
+                for (int i = 0; i < digest.length; i++) {
+                    strBuilder.append(String.format("%02x", digest[i]));
+                }
+                return strBuilder.toString();
+            } catch (NoSuchAlgorithmException e) {
+                e.printStackTrace();
+            }
+        }
+
+        return null;
     }
 
 }
