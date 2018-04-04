@@ -73,7 +73,7 @@ public abstract class ExecuteBoundResource<ArgumentType, ResultType> {
 
             @Override
             public void onError(Throwable e) {
-
+                setValue(Resource.error(e.getMessage(), null));
             }
 
             @Override

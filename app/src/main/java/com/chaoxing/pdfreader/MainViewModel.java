@@ -9,6 +9,8 @@ import android.arch.lifecycle.Transformations;
 import android.support.annotation.NonNull;
 
 import java.io.File;
+import java.util.Arrays;
+import java.util.Comparator;
 
 /**
  * Created by bighu on 2018/4/3.
@@ -24,13 +26,17 @@ public class MainViewModel extends AndroidViewModel {
         super(application);
 
         mFiles = Transformations.switchMap(mDirectory, directory -> {
+            File[] files = null;
             if (directory != null && directory.isDirectory()) {
-                long length = directory.length();
-                File[] f = directory.listFiles();
-                mFileList.setValue(directory.listFiles());
-            } else {
-                mFileList.setValue(new File[]{});
+                files = directory.listFiles();
             }
+
+            if (files == null) {
+                files = new File[]{};
+            }
+
+            Arrays.sort(files, (f1, f2) -> compare(f1, f2));
+            mFileList.setValue(files);
             return mFileList;
         });
     }
@@ -43,4 +49,7 @@ public class MainViewModel extends AndroidViewModel {
         return mFiles;
     }
 
+    public int compare(File f1, File f2) {
+        return f1.getName().compareToIgnoreCase(f2.getName());
+    }
 }

@@ -30,17 +30,21 @@ public class DocumentHelper {
 
                 Log.i(TAG, "open document : " + path);
 
-                if (Utils.isBlank(args) || !new File(path).exists()) {
-                    return Resource.error("打开文档失败", null);
+                try {
+                    if (Utils.isBlank(args) || !new File(path).exists()) {
+                        return Resource.error("文档不存在", null);
+                    }
+
+                    DocumentBinding binding = new DocumentBinding();
+                    binding.setPath(args);
+                    Document document = Document.openDocument(args);
+                    binding.setDocument(document);
+                    binding.setNeedsPassword(document.needsPassword());
+
+                    return Resource.success(binding);
+                } catch (Throwable t) {
+                    return Resource.error(t.getMessage(), null);
                 }
-
-                DocumentBinding binding = new DocumentBinding();
-                binding.setPath(args);
-                Document document = Document.openDocument(args);
-                binding.setDocument(document);
-                binding.setNeedsPassword(document.needsPassword());
-
-                return Resource.success(binding);
             }
         }.ready().execute();
     }

@@ -1,6 +1,7 @@
 package com.chaoxing.pdfreader;
 
 import android.support.annotation.NonNull;
+import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -32,13 +33,15 @@ public class FileAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
         FileViewHolder viewHolder = (FileViewHolder) holder;
         final File file = mFiles[position];
+        if (file.isDirectory()) {
+            viewHolder.mTvFile.setCompoundDrawablesWithIntrinsicBounds(R.mipmap.ic_folder_black_36dp, 0, 0, 0);
+        } else {
+            viewHolder.mTvFile.setCompoundDrawablesWithIntrinsicBounds(R.mipmap.ic_cloud_black_36dp, 0, 0, 0);
+        }
         viewHolder.mTvFile.setText(file.getName());
-        viewHolder.mItemView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (onItemClickListener != null) {
-                    onItemClickListener.onItemClick(file);
-                }
+        viewHolder.mCardView.setOnClickListener(v -> {
+            if (onItemClickListener != null) {
+                onItemClickListener.onItemClick(file);
             }
         });
     }
@@ -54,12 +57,12 @@ public class FileAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     static class FileViewHolder extends RecyclerView.ViewHolder {
 
-        View mItemView;
+        CardView mCardView;
         TextView mTvFile;
 
         public FileViewHolder(View itemView) {
             super(itemView);
-            mItemView = itemView;
+            mCardView = itemView.findViewById(R.id.card_view);
             mTvFile = itemView.findViewById(R.id.tv_file);
         }
 

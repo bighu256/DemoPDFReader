@@ -6,6 +6,7 @@ import android.content.DialogInterface;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.design.widget.Snackbar;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.AppCompatEditText;
@@ -15,6 +16,7 @@ import android.support.v7.widget.RecyclerView;
 import android.text.method.PasswordTransformationMethod;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -22,6 +24,7 @@ import android.widget.Toast;
 import com.artifex.mupdf.fitz.Document;
 import com.artifex.mupdf.fitz.Page;
 import com.chaoxing.pdfreader.util.AutoClearedValue;
+import com.chaoxing.pdfreader.util.Utils;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -110,13 +113,17 @@ public class PDFDocumentActivity extends AppCompatActivity {
 
     private void askPassword() {
         if (mInputPasswordDialog == null) {
+            final LinearLayout layout = new LinearLayout(this);
+            layout.setOrientation(LinearLayout.VERTICAL);
+            layout.setPadding(Utils.dp2px(this, 24), Utils.dp2px(this, 12), Utils.dp2px(this, 24), Utils.dp2px(this, 12));
             final AppCompatEditText etPassword = new AppCompatEditText(this);
             etPassword.setInputType(EditorInfo.TYPE_TEXT_VARIATION_PASSWORD);
             etPassword.setTransformationMethod(PasswordTransformationMethod.getInstance());
+            layout.addView(etPassword);
 
             mInputPasswordDialog = new AlertDialog.Builder(this)
                     .setTitle("输入密码")
-                    .setView(etPassword)
+                    .setView(layout)
                     .setPositiveButton("确定", null)
                     .setNegativeButton("取消", new DialogInterface.OnClickListener() {
                         @Override
