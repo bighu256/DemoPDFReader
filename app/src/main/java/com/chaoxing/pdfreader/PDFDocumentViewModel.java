@@ -10,15 +10,17 @@ import android.support.annotation.NonNull;
 
 import com.artifex.mupdf.fitz.Page;
 
+import java.io.File;
 import java.util.List;
 
 /**
  * Created by HUWEI on 2018/3/26.
  */
 
-public class DocumentViewModel extends AndroidViewModel {
+public class PDFDocumentViewModel extends AndroidViewModel {
 
     private DocumentHelper mDocumentHelper = new DocumentHelper();
+    private PageHandler mPageHandler;
 
     private final MutableLiveData<String> mPath = new MutableLiveData<>();
     private LiveData<Resource<DocumentBinding>> mOpenDocumentResult;
@@ -30,10 +32,10 @@ public class DocumentViewModel extends AndroidViewModel {
     private LiveData<Resource<DocumentBinding>> mLoadDocumentResult;
 
     private final MutableLiveData<Integer> mLoadPage = new MutableLiveData<>();
-    private LiveData<Resource<Integer>> mLoadPageResult;
+    private LiveData<Resource<PageFile>> mLoadPageResult;
 
 
-    public DocumentViewModel(@NonNull Application application) {
+    public PDFDocumentViewModel(@NonNull Application application) {
         super(application);
         mOpenDocumentResult = Transformations.switchMap(mPath, documentPath -> {
             return mDocumentHelper.openDocument(getApplication().getApplicationContext(), documentPath);
@@ -47,8 +49,11 @@ public class DocumentViewModel extends AndroidViewModel {
             return mDocumentHelper.loadDocument(getApplication().getApplicationContext(), documentBinding);
         });
 
-        mLoadPageResult = Transformations.switchMap(mLoadPage, documentBinding -> {
-            return null;
+        mLoadPageResult = Transformations.switchMap(mLoadPage, pageNumber -> {
+            if (mPageHandler == null) {
+                mPageHandler = new PageHandler(getApplication().getApplicationContext(), getDocumentBinding());
+            }
+            return mPageHandler.loadPage(pageNumber);
         });
     }
 
@@ -81,9 +86,19 @@ public class DocumentViewModel extends AndroidViewModel {
         return mLoadDocumentResult.getValue().getData();
     }
 
-    public List<Integer> getLoadPageResult() {
-//        return mLoadPageListResult.getValue().getData();
-        return null;
+    public void loadPage(int pageNumber) {
+        mLoadPage.setValue(pageNumber);
+    }
+
+    public LiveData<Resource<PageFile>> getLoadPageResult() {
+        return mLoadPageResult;
+    }
+
+    public File getPage(int pageNumber) {
+        if (mPageHandler == null) {
+            mPageHandler = new PageHandler(getApplication().getApplicationContext(), getDocumentBinding());
+        }
+        return mPageHandler.getPage(pageNumber);
     }
 
 }

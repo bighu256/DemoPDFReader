@@ -3,6 +3,8 @@ package com.chaoxing.pdfreader;
 import android.Manifest;
 import android.arch.lifecycle.ViewModelProviders;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.Rect;
 import android.net.Uri;
 import android.os.Environment;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -12,11 +14,14 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
 import com.chaoxing.pdfreader.util.Utils;
+import com.davemorrissey.labs.subscaleview.ImageSource;
+import com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView;
 import com.tbruyelle.rxpermissions2.RxPermissions;
 
 import java.io.File;
@@ -41,7 +46,6 @@ public class MainActivity extends AppCompatActivity {
         toolbar.setNavigationIcon(R.mipmap.ic_folder_white_36dp);
         toolbar.setTitle("Files");
         setSupportActionBar(toolbar);
-
 
         mViewModel = ViewModelProviders.of(this).get(MainViewModel.class);
         initView();

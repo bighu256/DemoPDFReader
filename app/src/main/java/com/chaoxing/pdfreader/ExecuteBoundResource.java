@@ -33,7 +33,7 @@ public abstract class ExecuteBoundResource<ArgumentType, ResultType> {
         public void subscribe(ObservableEmitter<Resource<ResultType>> emitter) throws Exception {
             emitter.onNext(onExecute(mApplicationContext, args));
         }
-    }).observeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread());
+    }).subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread());
 
     public ExecuteBoundResource(Context context, ArgumentType args) {
         mApplicationContext = context.getApplicationContext();

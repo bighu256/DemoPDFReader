@@ -5,6 +5,7 @@ import android.content.Context;
 import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.text.TextUtils;
+import android.util.DisplayMetrics;
 import android.util.Log;
 
 import com.artifex.mupdf.fitz.Document;
@@ -39,6 +40,7 @@ public class DocumentHelper {
                     binding.setPath(args);
                     Document document = Document.openDocument(args);
                     binding.setDocument(document);
+                    binding.setMd5(Utils.md5(new File(path)));
                     binding.setNeedsPassword(document.needsPassword());
 
                     return Resource.success(binding);
@@ -74,8 +76,10 @@ public class DocumentHelper {
                     DocumentBinding newDocumentBinding = new DocumentBinding();
                     newDocumentBinding.setPath(path);
                     newDocumentBinding.setDocument(document);
+                    newDocumentBinding.setMd5(args.getMd5());
                     newDocumentBinding.setNeedsPassword(args.isNeedsPassword());
                     String title = document.getMetaData(Document.META_INFO_TITLE);
+                    String format = document.getMetaData(Document.META_FORMAT);
                     if (TextUtils.isEmpty(title)) {
                         title = Uri.parse(path).getLastPathSegment();
                     }
@@ -83,8 +87,8 @@ public class DocumentHelper {
 
                     newDocumentBinding.setReflowable(document.isReflowable());
                     if (newDocumentBinding.isReflowable()) {
-//                        Log.i(TAG, "layout document");
-//                        doc.layout(layoutW, layoutH, layoutEm);
+                        DisplayMetrics dm = applicationContext.getResources().getDisplayMetrics();
+                        document.layout(dm.widthPixels, dm.heightPixels, 8);
                     }
 
                     newDocumentBinding.setPageCount(document.countPages());

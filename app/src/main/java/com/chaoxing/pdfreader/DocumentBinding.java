@@ -12,14 +12,16 @@ import java.util.List;
 public class DocumentBinding {
 
     private String path;
-    private String md5;
     private Document document;
+    private String md5;
 
     private boolean needsPassword;
 
     private String title;
     private boolean reflowable;
     private int pageCount;
+    private int pageWidth;
+    private int pageHeight;
     private List<Page> pageList;
 
     public String getPath() {
@@ -36,6 +38,14 @@ public class DocumentBinding {
 
     public void setDocument(Document document) {
         this.document = document;
+    }
+
+    public String getMd5() {
+        return md5;
+    }
+
+    public void setMd5(String md5) {
+        this.md5 = md5;
     }
 
     public boolean isNeedsPassword() {
@@ -68,6 +78,22 @@ public class DocumentBinding {
 
     public void setPageCount(int pageCount) {
         this.pageCount = pageCount;
+    }
+
+    public float getPageWidth() {
+        return pageWidth;
+    }
+
+    public void setPageWidth(int pageWidth) {
+        this.pageWidth = pageWidth;
+    }
+
+    public int getPageHeight() {
+        return pageHeight;
+    }
+
+    public void setPageHeight(int pageHeight) {
+        this.pageHeight = pageHeight;
     }
 
     public List<Page> getPageList() {

@@ -6,7 +6,6 @@ import android.content.DialogInterface;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
-import android.support.design.widget.Snackbar;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.AppCompatEditText;
@@ -21,16 +20,13 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.artifex.mupdf.fitz.Document;
 import com.artifex.mupdf.fitz.Page;
-import com.chaoxing.pdfreader.util.AutoClearedValue;
 import com.chaoxing.pdfreader.util.Utils;
 
+import java.io.File;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.Observable;
 
 /**
  * Created by HUWEI on 2018/3/26.
@@ -38,7 +34,7 @@ import java.util.stream.Stream;
 
 public class PDFDocumentActivity extends AppCompatActivity {
 
-    private DocumentViewModel mViewModel;
+    private PDFDocumentViewModel mViewModel;
 
     private RecyclerView mDocumentPager;
     private PageAdapter mPageAdapter;
@@ -52,8 +48,7 @@ public class PDFDocumentActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_pdf_document);
 
-
-        mViewModel = ViewModelProviders.of(this).get(DocumentViewModel.class);
+        mViewModel = ViewModelProviders.of(this).get(PDFDocumentViewModel.class);
 
         Uri uri = getIntent().getData();
         String mimetype = getIntent().getType();
@@ -79,7 +74,19 @@ public class PDFDocumentActivity extends AppCompatActivity {
         PagerSnapHelper snapHelper = new PagerSnapHelper();
         snapHelper.attachToRecyclerView(mDocumentPager);
         mPageAdapter = new PageAdapter();
+        mDocumentPager.setItemViewCacheSize(1);
         mDocumentPager.setAdapter(mPageAdapter);
+        mPageAdapter.setPageLoader(new PageAdapter.PageLoader() {
+            @Override
+            public File getPage(int pageNumber) {
+                return mViewModel.getPage(pageNumber);
+            }
+
+            @Override
+            public void loadPage(int pageNumber) {
+                mViewModel.loadPage(pageNumber);
+            }
+        });
         mDocumentPager.setHasFixedSize(true);
         mPbLoading = findViewById(R.id.pb_loading);
         mTvMessage = findViewById(R.id.tv_message);
@@ -87,6 +94,7 @@ public class PDFDocumentActivity extends AppCompatActivity {
         mViewModel.getOpenDocumentResult().observe(this, mObserverOpenDocument);
         mViewModel.getCheckPasswordResult().observe(PDFDocumentActivity.this, mObserverCheckPassword);
         mViewModel.getLoadDocumentResult().observe(this, mObserverLoadDocument);
+        mViewModel.getLoadPageResult().observe(this, mObserverLoadPage);
     }
 
     private Observer<Resource<DocumentBinding>> mObserverOpenDocument = new Observer<Resource<DocumentBinding>>() {
@@ -149,7 +157,7 @@ public class PDFDocumentActivity extends AppCompatActivity {
         }
     }
 
-    Observer<Resource<Boolean>> mObserverCheckPassword = new Observer<Resource<Boolean>>() {
+    private Observer<Resource<Boolean>> mObserverCheckPassword = new Observer<Resource<Boolean>>() {
         @Override
         public void onChanged(@Nullable Resource<Boolean> result) {
             mInputPasswordDialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(true);
@@ -167,7 +175,7 @@ public class PDFDocumentActivity extends AppCompatActivity {
         mViewModel.loadDocument();
     }
 
-    Observer<Resource<DocumentBinding>> mObserverLoadDocument = new Observer<Resource<DocumentBinding>>() {
+    private Observer<Resource<DocumentBinding>> mObserverLoadDocument = new Observer<Resource<DocumentBinding>>() {
         @Override
         public void onChanged(@Nullable Resource<DocumentBinding> documentBinding) {
             if (documentBinding.isLoading()) {
@@ -189,8 +197,12 @@ public class PDFDocumentActivity extends AppCompatActivity {
         }
     };
 
-    private void loadPage(int number) {
-        Page page = mViewModel.getDocumentBinding().getDocument().loadPage(number);
-    }
+    private Observer<Resource<PageFile>> mObserverLoadPage = new Observer<Resource<PageFile>>() {
+        @Override
+        public void onChanged(@Nullable Resource<PageFile> resource) {
+            PageFile pageFile = resource.getData();
+            mPageAdapter.notifyItemChanged(pageFile.getPageNumber());
+        }
+    };
 
 }

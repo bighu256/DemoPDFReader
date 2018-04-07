@@ -3,6 +3,7 @@ package com.chaoxing.pdfreader.util;
 import android.content.Context;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
@@ -50,7 +51,36 @@ public class Utils {
             }
         }
 
-        return null;
+        return "";
     }
 
+    public static String md5(File file) {
+        if (file != null && file.exists() && file.isFile()) {
+            try {
+                MessageDigest md = MessageDigest.getInstance("MD5");
+                FileInputStream fis = new FileInputStream(file);
+
+                int bufferSize = 2 * 1024 * 1024;
+                if (file.length() < bufferSize) {
+                    bufferSize = (int) file.length();
+                }
+                byte[] buffer = new byte[bufferSize];
+
+                int count = 0;
+                while ((count = fis.read(buffer)) != -1) {
+                    md.update(buffer, 0, count);
+                }
+                byte[] digest = md.digest();
+
+                StringBuilder strBuilder = new StringBuilder();
+                for (int i = 0; i < digest.length; i++) {
+                    strBuilder.append(String.format("%02x", digest[i]));
+                }
+                return strBuilder.toString();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return "";
+    }
 }

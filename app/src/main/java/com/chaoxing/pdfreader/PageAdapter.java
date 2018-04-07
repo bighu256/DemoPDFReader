@@ -1,6 +1,6 @@
 package com.chaoxing.pdfreader;
 
-import android.arch.persistence.room.Index;
+import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -8,11 +8,10 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.artifex.mupdf.fitz.Page;
 import com.davemorrissey.labs.subscaleview.ImageSource;
 import com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView;
 
-import java.util.ArrayList;
+import java.io.File;
 import java.util.List;
 
 /**
@@ -24,6 +23,12 @@ public class PageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private static final String TAG = PageAdapter.class.getSimpleName();
 
     private List<Integer> mPageIndexList;
+
+    private PageLoader pageLoader;
+
+    public void setPageLoader(PageLoader pageLoader) {
+        this.pageLoader = pageLoader;
+    }
 
     public PageAdapter() {
     }
@@ -38,7 +43,23 @@ public class PageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
         PageViewHolder viewHolder = (PageViewHolder) holder;
 //        viewHolder.mPageView.setImage(ImageSource.asset(mImageList.get(position)));
-        viewHolder.mPageView.setImage(ImageSource.resource(R.mipmap.d));
+        File file = null;
+        if (pageLoader != null) {
+            file = pageLoader.getPage(position);
+            if (file == null || !file.exists()) {
+                pageLoader.loadPage(position);
+            }
+        }
+//        viewHolder.mPageView.setZoomEnabled(true);
+//        viewHolder.mPageView.setMinimumScaleType(SubsamplingScaleImageView.SCALE_TYPE_CUSTOM);
+//        viewHolder.mPageView.setMinScale(1);
+//        viewHolder.mPageView.setMaxScale(2);
+
+        if (file != null && file.exists()) {
+            viewHolder.mPageView.setImage(ImageSource.uri(Uri.fromFile(file)));
+        } else {
+            viewHolder.mPageView.recycle();
+        }
     }
 
     @Override
@@ -65,6 +86,13 @@ public class PageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         super.onViewRecycled(holder);
         int position = holder.getAdapterPosition();
         Log.i(TAG, "onViewRecycled : " + position);
+        PageViewHolder viewHolder = (PageViewHolder) holder;
+        viewHolder.mPageView.recycle();
     }
 
+    public interface PageLoader {
+        File getPage(int pageNumber);
+
+        void loadPage(int pageNumber);
+    }
 }
