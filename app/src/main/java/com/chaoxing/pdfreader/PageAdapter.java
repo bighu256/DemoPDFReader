@@ -2,17 +2,23 @@ package com.chaoxing.pdfreader;
 
 import android.net.Uri;
 import android.support.annotation.NonNull;
+import android.support.v7.util.DiffUtil;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.ProgressBar;
+import android.widget.TextView;
 
+import com.chaoxing.pdfreader.util.Utils;
 import com.davemorrissey.labs.subscaleview.ImageSource;
 import com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView;
 
 import java.io.File;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Created by bighu on 2018/4/1.
@@ -22,13 +28,9 @@ public class PageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     private static final String TAG = PageAdapter.class.getSimpleName();
 
-    private List<Integer> mPageIndexList;
+    private List<Resource<PageProfile>> mPageList;
 
-    private PageLoader pageLoader;
-
-    public void setPageLoader(PageLoader pageLoader) {
-        this.pageLoader = pageLoader;
-    }
+    private PageListener pageListener;
 
     public PageAdapter() {
     }
@@ -42,43 +44,112 @@ public class PageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
         PageViewHolder viewHolder = (PageViewHolder) holder;
-//        viewHolder.mPageView.setImage(ImageSource.asset(mImageList.get(position)));
-        File file = null;
-        if (pageLoader != null) {
-            file = pageLoader.getPage(position);
-            if (file == null || !file.exists()) {
-                pageLoader.loadPage(position);
+        Resource<PageProfile> pageResource = mPageList.get(position);
+
+        if (pageResource.isIdle()) {
+            viewHolder.mPageView.recycle();
+            viewHolder.mLoadingStatus.setVisibility(View.GONE);
+            pageListener.loadPage(position);
+        } else if (pageResource.isLoading()) {
+            viewHolder.mPageView.recycle();
+            viewHolder.mLoadingView.setVisibility(View.VISIBLE);
+            viewHolder.mTvMessage.setVisibility(View.GONE);
+            viewHolder.mBtnRetry.setVisibility(View.GONE);
+            viewHolder.mLoadingStatus.setVisibility(View.VISIBLE);
+        } else if (pageResource.isSuccessful()) {
+            viewHolder.mLoadingStatus.setVisibility(View.GONE);
+            PageProfile profile = pageResource.getData();
+            File pageFile = null;
+            if (!Utils.isBlank(profile.getPageFile())) {
+                File file = new File(profile.getPageFile());
+                if (file.exists() && file.isFile()) {
+                    pageFile = file;
+                }
+            }
+            if (pageFile != null) {
+                viewHolder.mPageView.setImage(ImageSource.uri(Uri.fromFile(pageFile)));
+            } else {
+                pageResource = Resource.error("页面加载失败", profile);
+
             }
         }
-//        viewHolder.mPageView.setZoomEnabled(true);
-//        viewHolder.mPageView.setMinimumScaleType(SubsamplingScaleImageView.SCALE_TYPE_CUSTOM);
-//        viewHolder.mPageView.setMinScale(1);
-//        viewHolder.mPageView.setMaxScale(2);
 
-        if (file != null && file.exists()) {
-            viewHolder.mPageView.setImage(ImageSource.uri(Uri.fromFile(file)));
-        } else {
+        if (pageResource.isError()) {
             viewHolder.mPageView.recycle();
+            viewHolder.mLoadingView.setVisibility(View.GONE);
+            viewHolder.mTvMessage.setText(pageResource.getMessage());
+            viewHolder.mTvMessage.setVisibility(View.VISIBLE);
+            viewHolder.mBtnRetry.setVisibility(View.VISIBLE);
+            viewHolder.mBtnRetry.setOnClickListener(view -> {
+                pageListener.loadPage(position);
+            });
+            viewHolder.mLoadingStatus.setVisibility(View.VISIBLE);
         }
+
     }
 
     @Override
     public int getItemCount() {
-        return mPageIndexList == null ? 0 : mPageIndexList.size();
+        return mPageList == null ? 0 : mPageList.size();
     }
 
     static class PageViewHolder extends RecyclerView.ViewHolder {
 
         SubsamplingScaleImageView mPageView;
+        View mLoadingStatus;
+        ProgressBar mLoadingView;
+        TextView mTvMessage;
+        Button mBtnRetry;
 
         public PageViewHolder(View itemView) {
             super(itemView);
             mPageView = itemView.findViewById(R.id.page_view);
+            mLoadingStatus = itemView.findViewById(R.id.loading_status);
+            mLoadingView = itemView.findViewById(R.id.loading_view);
+            mTvMessage = itemView.findViewById(R.id.tv_message);
+            mBtnRetry = itemView.findViewById(R.id.btn_retry);
+        }
+
+    }
+
+    public void setPageList(List<Resource<PageProfile>> pageList) {
+        if (mPageList == null) {
+            mPageList = pageList;
+            notifyItemRangeInserted(0, pageList.size());
+        } else {
+            DiffUtil.DiffResult result = DiffUtil.calculateDiff(new DiffUtil.Callback() {
+                @Override
+                public int getOldListSize() {
+                    return mPageList.size();
+                }
+
+                @Override
+                public int getNewListSize() {
+                    return pageList.size();
+                }
+
+                @Override
+                public boolean areItemsTheSame(int oldItemPosition, int newItemPosition) {
+                    return false;
+                }
+
+                @Override
+                public boolean areContentsTheSame(int oldItemPosition, int newItemPosition) {
+                    return false;
+                }
+            });
+            mPageList = pageList;
+            result.dispatchUpdatesTo(this);
         }
     }
 
-    public void setPageIndexList(List<Integer> pageIndexList) {
-        mPageIndexList = pageIndexList;
+    public void updatePage(Resource<PageProfile> page) {
+        PageProfile profile = page.getData();
+        if (profile != null) {
+            int pageNumber = profile.getNumber();
+            mPageList.set(pageNumber, page);
+            notifyItemChanged(pageNumber);
+        }
     }
 
     @Override
@@ -90,9 +161,12 @@ public class PageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         viewHolder.mPageView.recycle();
     }
 
-    public interface PageLoader {
-        File getPage(int pageNumber);
-
+    public interface PageListener {
         void loadPage(int pageNumber);
     }
+
+    public void setPageListener(PageListener pageListener) {
+        this.pageListener = pageListener;
+    }
+
 }

@@ -20,7 +20,7 @@ import java.util.List;
 public class PDFDocumentViewModel extends AndroidViewModel {
 
     private DocumentHelper mDocumentHelper = new DocumentHelper();
-    private PageHandler mPageHandler;
+    private PageLoader mPageLoader;
 
     private final MutableLiveData<String> mPath = new MutableLiveData<>();
     private LiveData<Resource<DocumentBinding>> mOpenDocumentResult;
@@ -31,8 +31,8 @@ public class PDFDocumentViewModel extends AndroidViewModel {
     private final MutableLiveData<DocumentBinding> mLoadDocument = new MutableLiveData<>();
     private LiveData<Resource<DocumentBinding>> mLoadDocumentResult;
 
-    private final MutableLiveData<Integer> mLoadPage = new MutableLiveData<>();
-    private LiveData<Resource<PageFile>> mLoadPageResult;
+    private final MutableLiveData<Integer[]> mLoadPage = new MutableLiveData<>();
+    private LiveData<Resource<PageProfile>> mLoadPageResult;
 
 
     public PDFDocumentViewModel(@NonNull Application application) {
@@ -49,11 +49,13 @@ public class PDFDocumentViewModel extends AndroidViewModel {
             return mDocumentHelper.loadDocument(getApplication().getApplicationContext(), documentBinding);
         });
 
-        mLoadPageResult = Transformations.switchMap(mLoadPage, pageNumber -> {
-            if (mPageHandler == null) {
-                mPageHandler = new PageHandler(getApplication().getApplicationContext(), getDocumentBinding());
+        mLoadPageResult = Transformations.switchMap(mLoadPage, (args) -> {
+            if (mPageLoader == null) {
+                mPageLoader = new PageLoaderImpl(getApplication(), getDocumentBinding());
             }
-            return mPageHandler.loadPage(pageNumber);
+            int pageNumber = args[0];
+            int width = args[1];
+            return mPageLoader.loadPage(pageNumber, width);
         });
     }
 
@@ -86,19 +88,13 @@ public class PDFDocumentViewModel extends AndroidViewModel {
         return mLoadDocumentResult.getValue().getData();
     }
 
-    public void loadPage(int pageNumber) {
-        mLoadPage.setValue(pageNumber);
+    public void loadPage(int pageNumber, int width) {
+        mLoadPage.setValue(new Integer[]{pageNumber, width});
     }
 
-    public LiveData<Resource<PageFile>> getLoadPageResult() {
+    public LiveData<Resource<PageProfile>> getLoadPageResult() {
         return mLoadPageResult;
     }
 
-    public File getPage(int pageNumber) {
-        if (mPageHandler == null) {
-            mPageHandler = new PageHandler(getApplication().getApplicationContext(), getDocumentBinding());
-        }
-        return mPageHandler.getPage(pageNumber);
-    }
 
 }

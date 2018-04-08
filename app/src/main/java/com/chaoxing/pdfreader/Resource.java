@@ -26,6 +26,14 @@ public class Resource<T> {
         this.message = message;
     }
 
+    public static <T> Resource<T> idle(@Nullable T data) {
+        return new Resource<>(Status.IDLE, data, null);
+    }
+
+    public static <T> Resource<T> loading(@Nullable T data) {
+        return new Resource<>(Status.LOADING, data, null);
+    }
+
     public static <T> Resource<T> success(@Nullable T data) {
         return new Resource<>(Status.SUCCESS, data, null);
     }
@@ -34,8 +42,13 @@ public class Resource<T> {
         return new Resource<>(Status.ERROR, data, msg);
     }
 
-    public static <T> Resource<T> loading(@Nullable T data) {
-        return new Resource<>(Status.LOADING, data, null);
+
+    public boolean isIdle() {
+        return status == Status.IDLE;
+    }
+
+    public boolean isLoading() {
+        return status == Status.LOADING;
     }
 
     public boolean isSuccessful() {
@@ -44,10 +57,6 @@ public class Resource<T> {
 
     public boolean isError() {
         return status == Status.ERROR;
-    }
-
-    public boolean isLoading() {
-        return status == Status.LOADING;
     }
 
     public Progress getProgress() {

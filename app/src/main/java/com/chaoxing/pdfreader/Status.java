@@ -5,7 +5,9 @@ package com.chaoxing.pdfreader;
  */
 
 public enum Status {
+    IDLE,
+    LOADING,
     SUCCESS,
-    ERROR,
-    LOADING
+    ERROR
+
 }

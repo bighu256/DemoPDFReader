@@ -25,6 +25,7 @@ import com.chaoxing.pdfreader.util.Utils;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Observable;
 
@@ -42,6 +43,7 @@ public class PDFDocumentActivity extends AppCompatActivity {
     private ProgressBar mPbLoading;
     private TextView mTvMessage;
 
+    private PageLoader mPageLoader;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -76,16 +78,8 @@ public class PDFDocumentActivity extends AppCompatActivity {
         mPageAdapter = new PageAdapter();
         mDocumentPager.setItemViewCacheSize(1);
         mDocumentPager.setAdapter(mPageAdapter);
-        mPageAdapter.setPageLoader(new PageAdapter.PageLoader() {
-            @Override
-            public File getPage(int pageNumber) {
-                return mViewModel.getPage(pageNumber);
-            }
-
-            @Override
-            public void loadPage(int pageNumber) {
-                mViewModel.loadPage(pageNumber);
-            }
+        mPageAdapter.setPageListener(pageNumber -> {
+            mViewModel.loadPage(pageNumber, getResources().getDisplayMetrics().widthPixels);
         });
         mDocumentPager.setHasFixedSize(true);
         mPbLoading = findViewById(R.id.pb_loading);
@@ -183,12 +177,8 @@ public class PDFDocumentActivity extends AppCompatActivity {
             } else if (documentBinding.isSuccessful()) {
                 mPbLoading.setVisibility(View.GONE);
                 int pageCount = documentBinding.getData().getPageCount();
-                List<Integer> pageIndexList = new ArrayList<>(pageCount);
-                for (int i = 0; i < pageCount; i++) {
-                    pageIndexList.add(i);
-                }
-                mPageAdapter.setPageIndexList(pageIndexList);
-                mPageAdapter.notifyDataSetChanged();
+                List<Resource<PageProfile>> pageList = new ArrayList<>(Collections.nCopies(pageCount, Resource.idle(null)));
+                mPageAdapter.setPageList(pageList);
             } else {
                 mPbLoading.setVisibility(View.GONE);
                 Toast.makeText(PDFDocumentActivity.this, documentBinding.getMessage(), Toast.LENGTH_SHORT).show();
@@ -197,11 +187,10 @@ public class PDFDocumentActivity extends AppCompatActivity {
         }
     };
 
-    private Observer<Resource<PageFile>> mObserverLoadPage = new Observer<Resource<PageFile>>() {
+    private Observer<Resource<PageProfile>> mObserverLoadPage = new Observer<Resource<PageProfile>>() {
         @Override
-        public void onChanged(@Nullable Resource<PageFile> resource) {
-            PageFile pageFile = resource.getData();
-            mPageAdapter.notifyItemChanged(pageFile.getPageNumber());
+        public void onChanged(@Nullable Resource<PageProfile> resource) {
+            mPageAdapter.updatePage(resource);
         }
     };
 
