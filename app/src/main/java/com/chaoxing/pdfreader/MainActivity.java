@@ -3,29 +3,23 @@ package com.chaoxing.pdfreader;
 import android.Manifest;
 import android.arch.lifecycle.ViewModelProviders;
 import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.Rect;
 import android.net.Uri;
 import android.os.Environment;
-import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.widget.ToggleButton;
 
 import com.chaoxing.pdfreader.util.Utils;
-import com.davemorrissey.labs.subscaleview.ImageSource;
-import com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView;
 import com.tbruyelle.rxpermissions2.RxPermissions;
 
 import java.io.File;
-import java.io.FileInputStream;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -43,7 +37,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         Toolbar toolbar = findViewById(R.id.toolbar);
-        toolbar.setNavigationIcon(R.mipmap.ic_folder_white_36dp);
+        toolbar.setNavigationIcon(R.mipmap.ic_storage_white_36dp);
         toolbar.setTitle("Files");
         setSupportActionBar(toolbar);
 
@@ -91,7 +85,12 @@ public class MainActivity extends AppCompatActivity {
 
     private void openRootDirectory() {
         mRootDirectory = Environment.getExternalStorageDirectory();
-        openDirectory(mRootDirectory);
+        File docDir = new File(mRootDirectory, "doc");
+        if (docDir.exists() && docDir.isDirectory()) {
+            openDirectory(docDir);
+        } else {
+            openDirectory(mRootDirectory);
+        }
     }
 
     private void openDirectory(File directory) {
@@ -108,7 +107,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void openFile(File file) {
         if (Utils.getFileExtension(file).equalsIgnoreCase("pdf")) {
-            Intent intent = new Intent(this, PDFDocumentActivity.class);
+            Intent intent = new Intent(this, PDFActivity.class);
             intent.setData(Uri.fromFile(file));
             startActivity(intent);
         }

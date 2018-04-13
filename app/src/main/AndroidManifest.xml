@@ -21,7 +21,7 @@
         </activity>
 
         <activity
-            android:name=".PDFDocumentActivity"
+            android:name=".PDFActivity"
             android:configChanges="orientation|screenSize|keyboardHidden"
             android:label="PDF Reader">
 

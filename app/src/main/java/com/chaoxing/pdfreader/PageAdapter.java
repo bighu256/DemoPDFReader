@@ -1,11 +1,14 @@
 package com.chaoxing.pdfreader;
 
+import android.graphics.Rect;
+import android.graphics.RectF;
 import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.v7.util.DiffUtil;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -73,6 +76,8 @@ public class PageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
             }
         }
+
+        viewHolder.mPageView.setOnPageClickListener(mOnPageClickListener);
 
         if (pageResource.isError()) {
             viewHolder.mPageView.recycle();
@@ -161,8 +166,17 @@ public class PageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         viewHolder.mPageView.recycle();
     }
 
+    private OnPageClickListener mOnPageClickListener = new OnPageClickListener() {
+        @Override
+        public void onClick(View view, MotionEvent e) {
+            pageListener.onPageClicked(view, e);
+        }
+    };
+
     public interface PageListener {
         void loadPage(int pageNumber);
+
+        void onPageClicked(View view, MotionEvent e);
     }
 
     public void setPageListener(PageListener pageListener) {

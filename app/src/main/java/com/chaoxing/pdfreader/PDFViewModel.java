@@ -17,7 +17,7 @@ import java.util.List;
  * Created by HUWEI on 2018/3/26.
  */
 
-public class PDFDocumentViewModel extends AndroidViewModel {
+public class PDFViewModel extends AndroidViewModel {
 
     private DocumentHelper mDocumentHelper = new DocumentHelper();
     private PageLoader mPageLoader;
@@ -35,7 +35,7 @@ public class PDFDocumentViewModel extends AndroidViewModel {
     private LiveData<Resource<PageProfile>> mLoadPageResult;
 
 
-    public PDFDocumentViewModel(@NonNull Application application) {
+    public PDFViewModel(@NonNull Application application) {
         super(application);
         mOpenDocumentResult = Transformations.switchMap(mPath, documentPath -> {
             return mDocumentHelper.openDocument(getApplication().getApplicationContext(), documentPath);
