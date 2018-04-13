@@ -112,7 +112,7 @@ public class PageLoaderImpl implements PageLoader {
                     fos.close();
                     pageFile = file;
                 } else {
-                    pageResource = Resource.error("页面绘制失败", profile);
+                    pageResource = Resource.error("页面加载失败", profile);
                 }
             }
 
