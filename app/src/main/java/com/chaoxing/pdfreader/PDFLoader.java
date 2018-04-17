@@ -9,7 +9,7 @@ import android.util.DisplayMetrics;
 import android.util.Log;
 
 import com.artifex.mupdf.fitz.Document;
-import com.artifex.mupdf.fitz.Page;
+import com.artifex.mupdf.fitz.Outline;
 import com.chaoxing.pdfreader.util.Utils;
 
 import java.io.File;
@@ -20,9 +20,9 @@ import java.util.List;
  * Created by HUWEI on 2018/3/26.
  */
 
-public class DocumentHelper {
+public class PDFLoader {
 
-    private static final String TAG = DocumentHelper.class.getSimpleName();
+    private static final String TAG = PDFLoader.class.getSimpleName();
 
     public LiveData<Resource<DocumentBinding>> openDocument(Context context, final String path) {
         return new ExecuteBoundResource<String, DocumentBinding>(context, path) {
@@ -103,20 +103,39 @@ public class DocumentHelper {
         }.ready().execute();
     }
 
-    public LiveData<Resource<List<Page>>> loadPageList(Context context, DocumentBinding documentBinding) {
-        return new ExecuteBoundResource<DocumentBinding, List<Page>>(context, documentBinding) {
+    public LiveData<Resource<DocumentBinding>> loadOutline(Context context, DocumentBinding documentBinding) {
+        return new ExecuteBoundResource<DocumentBinding, DocumentBinding>(context, documentBinding) {
 
             @NonNull
             @Override
-            protected Resource<List<Page>> onExecute(Context applicationContext, DocumentBinding args) {
-                List<Page> pageList = new ArrayList<>(args.getPageCount());
-                for (int i = 0; i < args.getPageCount(); i++) {
-                    pageList.add(null);
+            protected Resource<DocumentBinding> onExecute(Context applicationContext, DocumentBinding args) {
+                Resource<DocumentBinding> result = null;
+                try {
+                    Outline[] outline = args.getDocument().loadOutline();
+                    if (outline != null) {
+                        List<OutlineItem> outlineItemList = new ArrayList<>();
+                        flattenOutline(outlineItemList, outline, "");
+                        args.setOutlineItemList(outlineItemList);
+                    }
+                    result = Resource.success(args);
+                } catch (Throwable e) {
+                    e.printStackTrace();
+                    result = Resource.error(e.getMessage(), args);
                 }
-                return Resource.success(pageList);
+                return result;
             }
         }.ready().execute();
+    }
 
+    private void flattenOutline(List<OutlineItem> outlineItemList, Outline[] outline, String indent) {
+        for (Outline node : outline) {
+            if (node.title != null) {
+                outlineItemList.add(new OutlineItem(indent + node.title.replaceAll("\r", "").replaceAll("\n", ""), node.page));
+            }
+            if (node.down != null) {
+                flattenOutline(outlineItemList, node.down, indent + "    ");
+            }
+        }
     }
 
 }

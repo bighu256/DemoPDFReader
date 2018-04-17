@@ -9,9 +9,6 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * Created by bighu on 2018/4/3.
@@ -22,11 +19,10 @@ public class FileAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private File[] mFiles;
     private OnItemClickListener onItemClickListener;
 
-
     @NonNull
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        return new FileViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.item_file, parent, false));
+        return new FileViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.libpdf_item_file, parent, false));
     }
 
     @Override

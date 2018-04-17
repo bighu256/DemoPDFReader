@@ -1,17 +1,11 @@
 package com.chaoxing.pdfreader;
 
 import android.app.Application;
-import android.arch.core.util.Function;
 import android.arch.lifecycle.AndroidViewModel;
 import android.arch.lifecycle.LiveData;
 import android.arch.lifecycle.MutableLiveData;
 import android.arch.lifecycle.Transformations;
 import android.support.annotation.NonNull;
-
-import com.artifex.mupdf.fitz.Page;
-
-import java.io.File;
-import java.util.List;
 
 /**
  * Created by HUWEI on 2018/3/26.
@@ -19,7 +13,7 @@ import java.util.List;
 
 public class PDFViewModel extends AndroidViewModel {
 
-    private DocumentHelper mDocumentHelper = new DocumentHelper();
+    private PDFLoader mDocumentHelper = new PDFLoader();
     private PageLoader mPageLoader;
 
     private final MutableLiveData<String> mPath = new MutableLiveData<>();
@@ -33,6 +27,9 @@ public class PDFViewModel extends AndroidViewModel {
 
     private final MutableLiveData<Integer[]> mLoadPage = new MutableLiveData<>();
     private LiveData<Resource<PageProfile>> mLoadPageResult;
+
+    private final MutableLiveData<DocumentBinding> mLoadOutline = new MutableLiveData<>();
+    private LiveData<Resource<DocumentBinding>> mLoadOutlineResult;
 
 
     public PDFViewModel(@NonNull Application application) {
@@ -56,6 +53,10 @@ public class PDFViewModel extends AndroidViewModel {
             int pageNumber = args[0];
             int width = args[1];
             return mPageLoader.loadPage(pageNumber, width);
+        });
+
+        mLoadOutlineResult = Transformations.switchMap(mLoadOutline, (documentBinding) -> {
+            return mDocumentHelper.loadOutline(getApplication().getApplicationContext(), documentBinding);
         });
     }
 
@@ -96,5 +97,12 @@ public class PDFViewModel extends AndroidViewModel {
         return mLoadPageResult;
     }
 
+    public void loadOutline(DocumentBinding documentBinding) {
+        mLoadOutline.setValue(documentBinding);
+    }
+
+    public LiveData<Resource<DocumentBinding>> getLoadOutlineResult() {
+        return mLoadOutlineResult;
+    }
 
 }

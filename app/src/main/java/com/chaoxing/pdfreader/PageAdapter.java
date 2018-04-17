@@ -1,7 +1,6 @@
 package com.chaoxing.pdfreader;
 
-import android.graphics.Rect;
-import android.graphics.RectF;
+import android.content.res.Configuration;
 import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.v7.util.DiffUtil;
@@ -21,7 +20,6 @@ import com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView;
 
 import java.io.File;
 import java.util.List;
-import java.util.Objects;
 
 /**
  * Created by bighu on 2018/4/1.
@@ -41,7 +39,7 @@ public class PageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     @NonNull
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        return new PageViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.item_page, parent, false));
+        return new PageViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.libpdf_item_page, parent, false));
     }
 
     @Override
@@ -70,6 +68,11 @@ public class PageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                 }
             }
             if (pageFile != null) {
+                if (viewHolder.itemView.getContext().getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {
+                    viewHolder.mPageView.setMinimumScaleType(SubsamplingScaleImageView.SCALE_TYPE_CENTER_INSIDE);
+                } else {
+                    viewHolder.mPageView.setMinimumScaleType(SubsamplingScaleImageView.SCALE_TYPE_START);
+                }
                 viewHolder.mPageView.setImage(ImageSource.uri(Uri.fromFile(pageFile)));
             } else {
                 pageResource = Resource.error("页面加载失败", profile);

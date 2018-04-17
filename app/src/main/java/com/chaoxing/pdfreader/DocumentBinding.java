@@ -20,8 +20,8 @@ public class DocumentBinding {
     private String title;
     private boolean reflowable;
     private int pageCount;
-    private int pageWidth;
-    private int pageHeight;
+    private List<OutlineItem> outlineItemList;
+
     private List<Page> pageList;
 
     public String getPath() {
@@ -80,28 +80,12 @@ public class DocumentBinding {
         this.pageCount = pageCount;
     }
 
-    public float getPageWidth() {
-        return pageWidth;
+    public List<OutlineItem> getOutlineItemList() {
+        return outlineItemList;
     }
 
-    public void setPageWidth(int pageWidth) {
-        this.pageWidth = pageWidth;
-    }
-
-    public int getPageHeight() {
-        return pageHeight;
-    }
-
-    public void setPageHeight(int pageHeight) {
-        this.pageHeight = pageHeight;
-    }
-
-    public List<Page> getPageList() {
-        return pageList;
-    }
-
-    public void setPageList(List<Page> pageList) {
-        this.pageList = pageList;
+    public void setOutlineItemList(List<OutlineItem> outlineItemList) {
+        this.outlineItemList = outlineItemList;
     }
 
 }

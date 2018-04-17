@@ -6,10 +6,16 @@ import android.arch.lifecycle.Observer;
 import android.arch.lifecycle.ViewModelProviders;
 import android.content.DialogInterface;
 import android.content.res.Configuration;
+import android.graphics.Color;
 import android.graphics.RectF;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v4.view.GravityCompat;
+import android.support.v4.view.PagerAdapter;
+import android.support.v4.view.ViewPager;
+import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.AppCompatEditText;
@@ -17,12 +23,13 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.PagerSnapHelper;
 import android.support.v7.widget.RecyclerView;
 import android.text.method.PasswordTransformationMethod;
+import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.view.inputmethod.EditorInfo;
-import android.widget.ImageView;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -45,18 +52,33 @@ public class PDFActivity extends AppCompatActivity {
     private PDFViewModel mViewModel;
 
     private View mToolbar;
-    private ImageView mIvLeft;
+    private ImageButton mIbLeft;
     private TextView mTvTitle;
-    private ImageView mIvRight;
+    private ImageButton mIbRight;
     private View mBottomBar;
     private TextView mTvPageNumber;
+    private ImageButton mIbNavigation;
+    private ImageButton mIbMark;
+    private ImageButton mIbBrightness;
+    private ImageButton mIbForward;
+    private ImageButton mIbRotate;
+
     private RecyclerView mDocumentPager;
     private PageAdapter mPageAdapter;
     private AlertDialog mInputPasswordDialog;
     private ProgressBar mPbLoading;
     private TextView mTvMessage;
 
-    private PageLoader mPageLoader;
+
+    private DrawerLayout mDrawerLayout;
+    private TextView mTvOutline;
+    private TextView mTvNote;
+    private TextView mTvBookmark;
+    private ViewPager mVpNavigation;
+    private OutlineNavigationView mOutlineNavigationView;
+    private NoteNavigationView mNoteNavigationView;
+    private BookmarkNavigationView mBookmarkNavigationView;
+
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -64,7 +86,7 @@ public class PDFActivity extends AppCompatActivity {
         params.flags |= WindowManager.LayoutParams.FLAG_FULLSCREEN;
         getWindow().setAttributes(params);
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_pdf);
+        setContentView(R.layout.libpdf_activity_pdf);
 
         mViewModel = ViewModelProviders.of(this).get(PDFViewModel.class);
 
@@ -87,13 +109,24 @@ public class PDFActivity extends AppCompatActivity {
 
     private void initView() {
         mToolbar = findViewById(R.id.toolbar);
-        mIvLeft = findViewById(R.id.iv_left);
-        mIvLeft.setOnClickListener(mOnClickListener);
+        mIbLeft = findViewById(R.id.ib_left);
+        mIbLeft.setOnClickListener(mOnClickListener);
         mTvTitle = findViewById(R.id.tv_title);
-        mIvRight = findViewById(R.id.iv_right);
-        mIvRight.setOnClickListener(mOnClickListener);
+        mIbRight = findViewById(R.id.ib_right);
+        mIbRight.setOnClickListener(mOnClickListener);
         mBottomBar = findViewById(R.id.bottomBar);
         mTvPageNumber = findViewById(R.id.tv_page_number);
+        mIbNavigation = findViewById(R.id.ib_navigation);
+        mIbNavigation.setOnClickListener(mOnClickListener);
+        mIbMark = findViewById(R.id.ib_mark);
+        mIbMark.setOnClickListener(mOnClickListener);
+        mIbBrightness = findViewById(R.id.ib_brightness);
+        mIbBrightness.setOnClickListener(mOnClickListener);
+        mIbForward = findViewById(R.id.ib_forward);
+        mIbForward.setOnClickListener(mOnClickListener);
+        mIbRotate = findViewById(R.id.ib_rotate);
+        mIbRotate.setOnClickListener(mOnClickListener);
+
         mDocumentPager = findViewById(R.id.document_pager);
         setPagerLayoutManager();
         mDocumentPager.setHasFixedSize(true);
@@ -106,6 +139,84 @@ public class PDFActivity extends AppCompatActivity {
         mDocumentPager.setAdapter(mPageAdapter);
         mPbLoading = findViewById(R.id.pb_loading);
         mTvMessage = findViewById(R.id.tv_message);
+
+        mDrawerLayout = findViewById(R.id.drawer_layout);
+        mDrawerLayout.addDrawerListener(new DrawerLayout.SimpleDrawerListener() {
+            @Override
+            public void onDrawerOpened(View drawerView) {
+                int position = mVpNavigation.getCurrentItem();
+                if (position < mVpNavigation.getAdapter().getCount() - 1) {
+                    mDrawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_OPEN);
+                } else {
+                    mDrawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED);
+                }
+            }
+
+            @Override
+            public void onDrawerClosed(View drawerView) {
+                mDrawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED);
+            }
+        });
+        mDrawerLayout.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                switch (event.getAction()) {
+                    case MotionEvent.ACTION_DOWN:
+                        mDrawerLayout.closeDrawers();
+                        break;
+                }
+                return false;
+            }
+        });
+        mTvOutline = findViewById(R.id.tv_outline);
+        mTvOutline.setOnClickListener(mOnClickListener);
+        mTvNote = findViewById(R.id.tv_note);
+        mTvNote.setOnClickListener(mOnClickListener);
+        mTvBookmark = findViewById(R.id.tv_bookmark);
+        mTvBookmark.setOnClickListener(mOnClickListener);
+        mVpNavigation = findViewById(R.id.vp_navigation);
+        mOutlineNavigationView = new OutlineNavigationView(this);
+        mOutlineNavigationView.setOutlineListener(mOutlineListener);
+        mNoteNavigationView = new NoteNavigationView(this);
+        mBookmarkNavigationView = new BookmarkNavigationView(this);
+        List<View> navigationViewList = new ArrayList<>();
+        navigationViewList.add(mOutlineNavigationView);
+        navigationViewList.add(mNoteNavigationView);
+        navigationViewList.add(mBookmarkNavigationView);
+        mVpNavigation.setAdapter(new NavigationAdapter(navigationViewList));
+        mVpNavigation.addOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
+            @Override
+            public void onPageSelected(int position) {
+                if (position < mVpNavigation.getAdapter().getCount() - 1) {
+                    mDrawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_OPEN);
+                } else {
+                    mDrawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED);
+                }
+
+                if (position == 0) {
+                    mTvOutline.setBackgroundColor(0xFF0099FF);
+                    mTvOutline.setTextColor(Color.WHITE);
+                    mTvNote.setBackgroundColor(Color.TRANSPARENT);
+                    mTvNote.setTextColor(0xFF0099FF);
+                    mTvBookmark.setBackgroundColor(Color.TRANSPARENT);
+                    mTvBookmark.setTextColor(0xFF0099FF);
+                } else if (position == 1) {
+                    mTvOutline.setBackgroundColor(Color.TRANSPARENT);
+                    mTvOutline.setTextColor(0xFF0099FF);
+                    mTvNote.setBackgroundColor(0xFF0099FF);
+                    mTvNote.setTextColor(Color.WHITE);
+                    mTvBookmark.setBackgroundColor(Color.TRANSPARENT);
+                    mTvBookmark.setTextColor(0xFF0099FF);
+                } else if (position == 2) {
+                    mTvOutline.setBackgroundColor(Color.TRANSPARENT);
+                    mTvOutline.setTextColor(0xFF0099FF);
+                    mTvNote.setBackgroundColor(Color.TRANSPARENT);
+                    mTvNote.setTextColor(0xFF0099FF);
+                    mTvBookmark.setBackgroundColor(0xFF0099FF);
+                    mTvBookmark.setTextColor(Color.WHITE);
+                }
+            }
+        });
     }
 
     private void setPagerLayoutManager() {
@@ -116,15 +227,77 @@ public class PDFActivity extends AppCompatActivity {
         }
     }
 
+    class NavigationAdapter extends PagerAdapter {
+
+        private List<View> mNavigationViewList;
+
+        NavigationAdapter(List<View> navigationViewList) {
+            mNavigationViewList = navigationViewList;
+        }
+
+        @Override
+        public int getCount() {
+            return mNavigationViewList == null ? 0 : mNavigationViewList.size();
+        }
+
+        @Override
+        public boolean isViewFromObject(@NonNull View view, @NonNull Object object) {
+            return view == object;
+        }
+
+        @NonNull
+        @Override
+        public Object instantiateItem(@NonNull ViewGroup container, int position) {
+            View childView = mNavigationViewList.get(position);
+            container.addView(childView);
+            return childView;
+        }
+
+        @Override
+        public void destroyItem(@NonNull ViewGroup container, int position, @NonNull Object object) {
+            container.removeView(mNavigationViewList.get(position));
+        }
+
+    }
+
     private View.OnClickListener mOnClickListener = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
             int id = v.getId();
-            if (id == R.id.iv_left) {
+            if (id == R.id.ib_left) {
                 onBackPressed();
-            } else if (id == R.id.iv_right) {
+            } else if (id == R.id.ib_right) {
 
+            } else if (id == R.id.ib_navigation) {
+                if (mDrawerLayout.isDrawerOpen(GravityCompat.START)) {
+                    mDrawerLayout.closeDrawer(GravityCompat.START);
+                } else {
+                    mDrawerLayout.openDrawer(GravityCompat.START);
+                    hideBar();
+                }
+            } else if (id == R.id.ib_mark) {
+
+            } else if (id == R.id.ib_brightness) {
+
+            } else if (id == R.id.ib_forward) {
+
+            } else if (id == R.id.ib_rotate) {
+
+            } else if (id == R.id.tv_outline) {
+                mVpNavigation.setCurrentItem(0);
+            } else if (id == R.id.tv_note) {
+                mVpNavigation.setCurrentItem(1);
+            } else if (id == R.id.tv_bookmark) {
+                mVpNavigation.setCurrentItem(2);
             }
+        }
+    };
+
+    private OutlineNavigationView.OutlineListener mOutlineListener = new OutlineNavigationView.OutlineListener() {
+        @Override
+        public void toPage(int pageNumber) {
+            mDocumentPager.scrollToPosition(pageNumber);
+            mDrawerLayout.closeDrawer(GravityCompat.START);
         }
     };
 
@@ -133,6 +306,7 @@ public class PDFActivity extends AppCompatActivity {
         mViewModel.getCheckPasswordResult().observe(PDFActivity.this, mObserverCheckPassword);
         mViewModel.getLoadDocumentResult().observe(this, mObserverLoadDocument);
         mViewModel.getLoadPageResult().observe(this, mObserverLoadPage);
+        mViewModel.getLoadOutlineResult().observe(this, mObserverLoadOutline);
     }
 
 
@@ -226,6 +400,7 @@ public class PDFActivity extends AppCompatActivity {
                 List<Resource<PageProfile>> pageList = new ArrayList<>(Collections.nCopies(pageCount, Resource.idle(null)));
                 mPageAdapter.setPageList(pageList);
                 setPageNumberText();
+                mViewModel.loadOutline(mViewModel.getDocumentBinding());
             } else {
                 mPbLoading.setVisibility(View.GONE);
                 Toast.makeText(PDFActivity.this, documentBinding.getMessage(), Toast.LENGTH_SHORT).show();
@@ -238,6 +413,19 @@ public class PDFActivity extends AppCompatActivity {
         @Override
         public void onChanged(@Nullable Resource<PageProfile> resource) {
             mPageAdapter.updatePage(resource);
+        }
+    };
+
+    private Observer<Resource<DocumentBinding>> mObserverLoadOutline = new Observer<Resource<DocumentBinding>>() {
+        @Override
+        public void onChanged(@Nullable Resource<DocumentBinding> result) {
+            if (result.isLoading()) {
+                mOutlineNavigationView.loading();
+            } else if (result.isError()) {
+                mOutlineNavigationView.error(result.getMessage());
+            } else if (result.isSuccessful()) {
+                mOutlineNavigationView.setup(result.getData().getOutlineItemList());
+            }
         }
     };
 
@@ -277,11 +465,13 @@ public class PDFActivity extends AppCompatActivity {
                 int currentPage = ((LinearLayoutManager) mDocumentPager.getLayoutManager()).findFirstCompletelyVisibleItemPosition();
                 if (currentPage > 0) {
                     mDocumentPager.smoothScrollToPosition(currentPage - 1);
+                    hideBar();
                 }
             } else if (rightEdgeRect.contains(e.getX(), e.getY())) {
                 int currentPage = ((LinearLayoutManager) mDocumentPager.getLayoutManager()).findFirstCompletelyVisibleItemPosition();
                 if (currentPage < mViewModel.getDocumentBinding().getPageCount() - 1) {
                     mDocumentPager.smoothScrollToPosition(currentPage + 1);
+                    hideBar();
                 }
             }
         }
@@ -367,6 +557,14 @@ public class PDFActivity extends AppCompatActivity {
     };
 
     private void showBar() {
+        if (mToolbar.getVisibility() == View.VISIBLE && mBottomBar.getVisibility() == View.VISIBLE) {
+            return;
+        }
+
+        if ((mShowToolbarAnimator != null && mShowToolbarAnimator.isRunning()) && (mShowBottomBarAnimator != null && mShowBottomBarAnimator.isRunning())) {
+            return;
+        }
+
         if (mShowToolbarAnimator != null && mShowToolbarAnimator.isRunning()) {
             mShowToolbarAnimator.cancel();
         }
@@ -385,6 +583,14 @@ public class PDFActivity extends AppCompatActivity {
     }
 
     private void hideBar() {
+        if (mToolbar.getVisibility() != View.VISIBLE && mBottomBar.getVisibility() != View.VISIBLE) {
+            return;
+        }
+
+        if ((mHideToolbarAnimator != null && mHideToolbarAnimator.isRunning()) && (mHideBottomBarAnimator != null && mHideBottomBarAnimator.isRunning())) {
+            return;
+        }
+
         if (mHideToolbarAnimator != null && mHideToolbarAnimator.isRunning()) {
             mHideToolbarAnimator.cancel();
         }
@@ -413,6 +619,24 @@ public class PDFActivity extends AppCompatActivity {
         }
         setPagerLayoutManager();
         mDocumentPager.scrollToPosition(position);
+    }
+
+
+    @Override
+    public void onBackPressed() {
+        if (mDrawerLayout.isDrawerOpen(GravityCompat.START)) {
+            mDrawerLayout.closeDrawer(GravityCompat.START);
+        } else {
+            super.onBackPressed();
+        }
+    }
+
+    @Override
+    public void finish() {
+        if (mViewModel.getDocumentBinding() != null && mViewModel.getDocumentBinding().getDocument() != null) {
+            mViewModel.getDocumentBinding().getDocument().destroy();
+        }
+        super.finish();
     }
 
 }
